@@ -87,8 +87,13 @@ def send_all(block_size=500, backend=None):
         blacklist = models.Blacklist.objects.values_list('email', flat=True)
         connection.open()
         for message in _message_queue(block_size):
-            result = send_queued_message(message, smtp_connection=connection,
+            try:
+                result = send_queued_message(message, smtp_connection=connection,
                                   blacklist=blacklist)
+            except Exception, e:
+                result = constants.RESULT_FAILED
+                logger.error(e)
+            
             if result == constants.RESULT_SENT:
                 sent += 1
             elif result == constants.RESULT_FAILED:
